@@ -6,12 +6,8 @@ Step 10 combines:
 - contour-based pose estimation
 - annotated pick-point visualization
 
-The pipeline supports two practical modes:
-1. YOLO-guided pose estimation: use YOLO boxes as object regions.
-2. OpenCV fallback: if YOLO finds nothing, estimate pose from the full image.
-
-This is useful for a portfolio demo because it shows how object detection and
-geometric image processing can be combined in a robotics-style perception flow.
+Step 13A adds stronger YOLO inference controls and passes them through the
+integrated CLI and Streamlit app.
 """
 
 from __future__ import annotations
@@ -29,7 +25,6 @@ import numpy as np
 
 from pickpoint_vision.detection import (
     DetectionResult,
-    annotate_detection_file,
     draw_detection_results,
     load_yolo_model,
     run_yolo_on_image,
@@ -110,11 +105,7 @@ def _clip_box(
 
 
 def _mask_score(mask: np.ndarray) -> float:
-    """Score a candidate binary mask.
-
-    The score prefers a foreground area that is neither tiny nor the whole image,
-    with one dominant connected component near the center.
-    """
+    """Score a candidate binary mask."""
     height, width = mask.shape[:2]
     image_area = float(height * width)
     foreground = np.count_nonzero(mask)
@@ -149,15 +140,7 @@ def _mask_score(mask: np.ndarray) -> float:
 
 
 def segment_foreground_auto(image: np.ndarray) -> np.ndarray:
-    """Segment foreground using automatic polarity selection.
-
-    This handles both:
-    - dark objects on light backgrounds
-    - bright objects on dark backgrounds
-
-    It is still intentionally classical OpenCV and is not expected to solve
-    every real-world case.
-    """
+    """Segment foreground using automatic polarity selection."""
     if image.ndim == 3:
         grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
@@ -294,6 +277,9 @@ def run_integrated_pickpoint_on_image(
     use_yolo: bool = True,
     fallback_to_opencv: bool = True,
     max_detections: int = 3,
+    image_size: int = 640,
+    iou_threshold: float = 0.70,
+    augment: bool = False,
 ) -> IntegratedImageResult:
     """Run the integrated pick-point pipeline on one image."""
     image_path = Path(image_path)
@@ -320,6 +306,10 @@ def run_integrated_pickpoint_on_image(
             model=model,
             confidence_threshold=confidence_threshold,
             allowed_class_names=allowed_class_names,
+            image_size=image_size,
+            iou_threshold=iou_threshold,
+            augment=augment,
+            max_detections=max_detections,
         )
         detections = sorted(detections, key=lambda item: item.confidence, reverse=True)[:max_detections]
 
@@ -399,10 +389,7 @@ def run_integrated_pickpoint_on_image(
 
     elapsed_ms = (time.perf_counter() - start_time) * 1000.0
 
-    if integrated_results:
-        message = f"Integrated targets: {len(integrated_results)}"
-    else:
-        message = "No integrated pick target"
+    message = f"Integrated targets: {len(integrated_results)}" if integrated_results else "No integrated pick target"
 
     annotated = _draw_integrated_result(
         image=image,
@@ -524,6 +511,9 @@ def run_integrated_pickpoint_on_folder(
     fallback_to_opencv: bool = True,
     max_images: int | None = 10,
     max_detections: int = 3,
+    image_size: int = 640,
+    iou_threshold: float = 0.70,
+    augment: bool = False,
 ) -> tuple[list[IntegratedImageResult], Path]:
     """Run the integrated pipeline on a folder of images."""
     input_dir = Path(input_dir)
@@ -559,6 +549,9 @@ def run_integrated_pickpoint_on_folder(
             use_yolo=use_yolo,
             fallback_to_opencv=fallback_to_opencv,
             max_detections=max_detections,
+            image_size=image_size,
+            iou_threshold=iou_threshold,
+            augment=augment,
         )
         image_results.append(image_result)
         annotated_paths.append(output_path)

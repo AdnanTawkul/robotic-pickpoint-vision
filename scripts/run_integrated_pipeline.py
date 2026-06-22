@@ -4,9 +4,9 @@ Run from the repository root:
 
     py scripts\run_integrated_pipeline.py --input-dir data\sample_images
 
-For a deterministic OpenCV-only test:
+Improved YOLO attempt:
 
-    py scripts\run_integrated_pipeline.py --input-dir data\synthetic\images --no-yolo --max-images 5
+    py scripts\run_integrated_pipeline.py --input-dir data\sample_images --model yolov8s.pt --confidence 0.10 --img-size 1280 --augment
 """
 
 from __future__ import annotations
@@ -63,7 +63,24 @@ def parse_args() -> argparse.Namespace:
         "--confidence",
         type=float,
         default=0.25,
-        help="YOLO confidence threshold.",
+        help="YOLO confidence threshold. Try 0.10 for difficult tabletop images.",
+    )
+    parser.add_argument(
+        "--img-size",
+        type=int,
+        default=640,
+        help="YOLO inference image size. Try 960 or 1280 for small objects.",
+    )
+    parser.add_argument(
+        "--iou",
+        type=float,
+        default=0.70,
+        help="YOLO non-max suppression IoU threshold.",
+    )
+    parser.add_argument(
+        "--augment",
+        action="store_true",
+        help="Enable YOLO test-time augmentation. Slower but can improve difficult detections.",
     )
     parser.add_argument(
         "--classes",
@@ -114,6 +131,9 @@ def main() -> int:
         fallback_to_opencv=not args.no_fallback,
         max_images=args.max_images,
         max_detections=args.max_detections,
+        image_size=args.img_size,
+        iou_threshold=args.iou,
+        augment=args.augment,
     )
 
     successful_images = [result for result in image_results if result.success]
@@ -126,6 +146,13 @@ def main() -> int:
     print(f"Images with pick targets: {len(successful_images)}")
     print(f"Total pick targets: {target_count}")
     print(f"Mean runtime: {statistics.mean(timings):.3f} ms/image")
+    print()
+    print("YOLO settings:")
+    print(f"  Model: {args.model}")
+    print(f"  Confidence: {args.confidence}")
+    print(f"  Image size: {args.img_size}")
+    print(f"  IoU: {args.iou}")
+    print(f"  Augment: {args.augment}")
     print()
     print("Generated files:")
     print(f"  Annotated output directory: {args.output_dir}")

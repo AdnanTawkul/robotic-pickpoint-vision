@@ -7,6 +7,7 @@ import numpy as np
 
 from pickpoint_vision.detection import (
     DetectionResult,
+    YoloInferenceConfig,
     annotate_detection_file,
     detection_from_xyxy,
     draw_detection_results,
@@ -30,6 +31,26 @@ def test_detection_from_xyxy() -> None:
     assert detection.width == 100.0
     assert detection.height == 60.0
     assert detection.confidence == 0.91
+
+
+def test_yolo_inference_config_kwargs() -> None:
+    """YOLO inference config should map cleanly to predict kwargs."""
+    config = YoloInferenceConfig(
+        confidence_threshold=0.1,
+        image_size=1280,
+        iou_threshold=0.5,
+        augment=True,
+        max_detections=25,
+    )
+
+    kwargs = config.to_predict_kwargs()
+
+    assert kwargs["conf"] == 0.1
+    assert kwargs["imgsz"] == 1280
+    assert kwargs["iou"] == 0.5
+    assert kwargs["augment"] is True
+    assert kwargs["max_det"] == 25
+    assert kwargs["verbose"] is False
 
 
 def test_filter_detections() -> None:

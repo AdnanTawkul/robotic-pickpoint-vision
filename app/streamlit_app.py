@@ -71,6 +71,7 @@ def main() -> None:
             "YOLO model",
             value="yolov8n.pt",
             disabled=not use_yolo,
+            help="Try yolov8s.pt or yolov8m.pt for better detection quality.",
         )
 
         confidence = st.slider(
@@ -80,6 +81,31 @@ def main() -> None:
             value=0.25,
             step=0.05,
             disabled=not use_yolo,
+            help="Try 0.10 for difficult tabletop images.",
+        )
+
+        image_size = st.select_slider(
+            "YOLO image size",
+            options=[640, 768, 960, 1280],
+            value=640,
+            disabled=not use_yolo,
+            help="Larger values can improve small-object detection but are slower.",
+        )
+
+        iou_threshold = st.slider(
+            "YOLO IoU threshold",
+            min_value=0.30,
+            max_value=0.90,
+            value=0.70,
+            step=0.05,
+            disabled=not use_yolo,
+        )
+
+        augment = st.checkbox(
+            "Use YOLO test-time augmentation",
+            value=False,
+            disabled=not use_yolo,
+            help="Can improve some difficult detections, but is slower.",
         )
 
         class_filter_text = st.text_area(
@@ -117,8 +143,8 @@ def main() -> None:
 
         st.divider()
         st.markdown(
-            "**Tip:** The OpenCV path works best when the object has visible "
-            "contrast against the background. YOLO works best on common COCO-like objects."
+            "**Tip:** For difficult real images, try `yolov8s.pt`, confidence `0.10`, "
+            "image size `1280`, and augmentation enabled."
         )
 
     uploaded_file = st.file_uploader(
@@ -168,6 +194,9 @@ def main() -> None:
             use_yolo=use_yolo,
             fallback_to_opencv=fallback_enabled or not use_yolo,
             max_detections=max_detections,
+            image_size=image_size,
+            iou_threshold=iou_threshold,
+            augment=augment,
         )
 
     annotated_rgb = read_image_as_rgb(output_path)
@@ -206,7 +235,7 @@ def main() -> None:
     st.subheader("Pick-point results")
     if rows:
         dataframe = pd.DataFrame(rows)
-        st.dataframe(dataframe, width="stretch")
+        st.dataframe(dataframe, use_container_width=True)
     else:
         st.warning("No result rows were produced.")
 

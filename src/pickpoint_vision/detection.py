@@ -6,6 +6,12 @@ project can support both:
 
 - classical segmentation / pose estimation for controlled synthetic data
 - YOLO object detection for real phone/webcam/public images
+
+Step 13A adds stronger inference controls:
+- image size
+- test-time augmentation
+- IoU threshold
+- maximum detections
 """
 
 from __future__ import annotations
@@ -43,6 +49,29 @@ class DetectionResult:
     def to_dict(self) -> dict[str, object]:
         """Convert detection result to a serializable dictionary."""
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class YoloInferenceConfig:
+    """YOLO inference configuration."""
+
+    model_name_or_path: str = "yolov8n.pt"
+    confidence_threshold: float = 0.25
+    image_size: int = 640
+    iou_threshold: float = 0.70
+    augment: bool = False
+    max_detections: int = 100
+
+    def to_predict_kwargs(self) -> dict[str, object]:
+        """Convert config to Ultralytics predict keyword arguments."""
+        return {
+            "conf": self.confidence_threshold,
+            "imgsz": self.image_size,
+            "iou": self.iou_threshold,
+            "augment": self.augment,
+            "max_det": self.max_detections,
+            "verbose": False,
+        }
 
 
 def load_yolo_model(model_name_or_path: str = "yolov8n.pt") -> Any:
@@ -142,16 +171,27 @@ def run_yolo_on_image(
     model: Any,
     confidence_threshold: float = 0.25,
     allowed_class_names: set[str] | None = None,
+    image_size: int = 640,
+    iou_threshold: float = 0.70,
+    augment: bool = False,
+    max_detections: int = 100,
 ) -> list[DetectionResult]:
     """Run YOLO on one image and return parsed detections."""
     image_path = Path(image_path)
     if not image_path.exists():
         raise FileNotFoundError(f"Missing image: {image_path}")
 
+    config = YoloInferenceConfig(
+        confidence_threshold=confidence_threshold,
+        image_size=image_size,
+        iou_threshold=iou_threshold,
+        augment=augment,
+        max_detections=max_detections,
+    )
+
     predictions = model.predict(
         source=str(image_path),
-        conf=confidence_threshold,
-        verbose=False,
+        **config.to_predict_kwargs(),
     )
 
     if not predictions:
@@ -187,11 +227,12 @@ def run_yolo_on_image(
             )
         )
 
-    return filter_detections(
+    detections = filter_detections(
         detections=detections,
         allowed_class_names=allowed_class_names,
         min_confidence=confidence_threshold,
     )
+    return sorted(detections, key=lambda detection: detection.confidence, reverse=True)
 
 
 def run_yolo_on_folder(
@@ -200,6 +241,10 @@ def run_yolo_on_folder(
     confidence_threshold: float = 0.25,
     allowed_class_names: set[str] | None = None,
     max_images: int | None = None,
+    image_size: int = 640,
+    iou_threshold: float = 0.70,
+    augment: bool = False,
+    max_detections: int = 100,
 ) -> dict[Path, list[DetectionResult]]:
     """Run YOLO on a folder of images."""
     image_paths = list_image_files(input_dir)
@@ -213,6 +258,10 @@ def run_yolo_on_folder(
             model=model,
             confidence_threshold=confidence_threshold,
             allowed_class_names=allowed_class_names,
+            image_size=image_size,
+            iou_threshold=iou_threshold,
+            augment=augment,
+            max_detections=max_detections,
         )
 
     return results

@@ -4,16 +4,18 @@ Run from the repository root:
 
     py scripts\run_yolo_detection.py --input-dir data\synthetic\images --max-images 5
 
-For a better real-image demo, put phone images in data\sample_images and run:
+Improved detection attempt:
 
-    py scripts\run_yolo_detection.py --input-dir data\sample_images
+    py scripts\run_yolo_detection.py --input-dir data\sample_images --model yolov8s.pt --confidence 0.10 --img-size 1280 --augment
 """
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import statistics
 import sys
+import time
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
@@ -24,7 +26,7 @@ from pickpoint_vision.detection import (
     annotate_detection_file,
     create_detection_preview_grid,
     load_yolo_model,
-    run_yolo_on_folder,
+    run_yolo_on_image,
     save_detection_results_csv,
 )
 from pickpoint_vision.utils import list_image_files
@@ -63,7 +65,30 @@ def parse_args() -> argparse.Namespace:
         "--confidence",
         type=float,
         default=0.25,
-        help="YOLO confidence threshold.",
+        help="YOLO confidence threshold. Try 0.10 for difficult tabletop images.",
+    )
+    parser.add_argument(
+        "--img-size",
+        type=int,
+        default=640,
+        help="YOLO inference image size. Try 960 or 1280 for small objects.",
+    )
+    parser.add_argument(
+        "--iou",
+        type=float,
+        default=0.70,
+        help="YOLO non-max suppression IoU threshold.",
+    )
+    parser.add_argument(
+        "--augment",
+        action="store_true",
+        help="Enable YOLO test-time augmentation. Slower but can improve difficult detections.",
+    )
+    parser.add_argument(
+        "--max-det",
+        type=int,
+        default=100,
+        help="Maximum YOLO detections per image before filtering.",
     )
     parser.add_argument(
         "--classes",
@@ -98,22 +123,35 @@ def main() -> int:
 
     print("Loading YOLO model...")
     print(f"  Model: {args.model}")
+    print(f"  Confidence: {args.confidence}")
+    print(f"  Image size: {args.img_size}")
+    print(f"  IoU: {args.iou}")
+    print(f"  Augment: {args.augment}")
     model = load_yolo_model(args.model)
 
-    detections_by_image = run_yolo_on_folder(
-        input_dir=args.input_dir,
-        model=model,
-        confidence_threshold=args.confidence,
-        allowed_class_names=allowed_classes,
-        max_images=args.max_images,
-    )
-
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    annotated_paths: list[Path] = []
 
-    total_detections = 0
-    for image_path, detections in detections_by_image.items():
-        total_detections += len(detections)
+    detections_by_image = {}
+    annotated_paths: list[Path] = []
+    image_runtimes_ms: list[float] = []
+
+    for image_path in image_paths:
+        start_time = time.perf_counter()
+        detections = run_yolo_on_image(
+            image_path=image_path,
+            model=model,
+            confidence_threshold=args.confidence,
+            allowed_class_names=allowed_classes,
+            image_size=args.img_size,
+            iou_threshold=args.iou,
+            augment=args.augment,
+            max_detections=args.max_det,
+        )
+        runtime_ms = (time.perf_counter() - start_time) * 1000.0
+        image_runtimes_ms.append(runtime_ms)
+
+        detections_by_image[image_path] = detections
+
         output_path = args.output_dir / image_path.name.replace(
             image_path.suffix,
             "_yolo_annotated.png",
@@ -134,18 +172,36 @@ def main() -> int:
         output_path=args.output_dir / "yolo_detection_grid.png",
     )
 
+    total_detections = sum(len(detections) for detections in detections_by_image.values())
+    images_with_detections = sum(bool(detections) for detections in detections_by_image.values())
+
     print("YOLO detection complete.")
     print(f"Input directory: {args.input_dir}")
     print(f"Images processed: {len(detections_by_image)}")
+    print(f"Images with detections: {images_with_detections}")
     print(f"Total detections: {total_detections}")
+    print(f"Mean runtime: {statistics.mean(image_runtimes_ms):.3f} ms/image")
     print(f"Annotated output directory: {args.output_dir}")
     print(f"Detection CSV: {args.metrics_csv}")
     print(f"Preview grid: {grid_path}")
 
+    print()
+    print("Per-image detection summary:")
+    for image_path, detections in detections_by_image.items():
+        if detections:
+            labels = ", ".join(
+                f"{detection.class_name}:{detection.confidence:.2f}"
+                for detection in detections[:5]
+            )
+        else:
+            labels = "no detections"
+        print(f"  {image_path.name}: {labels}")
+
     if total_detections == 0:
         print()
         print("Note: zero detections can be normal for synthetic rectangles/ellipses.")
-        print("For a better YOLO demo, add phone images of common objects to data\\sample_images.")
+        print("For difficult real images, try:")
+        print("  --model yolov8s.pt --confidence 0.10 --img-size 1280 --augment")
 
     return 0
 
