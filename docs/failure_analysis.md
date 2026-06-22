@@ -1,56 +1,170 @@
 # Failure-Case Analysis
 
-This document will be expanded throughout the project.
+This document summarizes known limitations and practical failure modes.
 
-## Initial expected failure modes
+## Why failure analysis matters
 
-- Low contrast between object and background
-- Strong shadows or highlights
-- Motion blur or defocus blur
-- Partial occlusion
-- Cluttered scenes with touching objects
-- Symmetric objects where orientation is visually ambiguous
-- Detection failure on object categories not represented in training or examples
+A robotics perception project is more credible when it shows where the pipeline works and where it fails. This project intentionally includes robustness tests and real-image examples to document limitations rather than hiding them.
 
-## How we will analyze failures
+---
 
-For each failure case, we will document:
+## 1. YOLO misses unusual objects
 
-- input image
-- expected behavior
-- actual behavior
-- suspected cause
-- possible fix
-- whether the issue is acceptable for a demo portfolio project
+### Observation
 
-## Step 8 quantitative robustness evaluation
+Off-the-shelf YOLO may miss objects that are not common COCO-style categories or are photographed from unusual views.
 
-Step 8 evaluates degraded RGB images using classical image-based segmentation. This is intentionally harder than the clean-mask baseline.
+Examples observed during testing:
 
-Expected observations:
+- bottle image: no YOLO detection
+- toy car image: no YOLO detection
+- cup image: no YOLO detection
+- mouse image: YOLO behavior depends on view and confidence
+- scissors/tweezers-like tools: more likely to be detected
 
-- blur should usually remain stable for large objects
-- mild noise should usually remain stable after morphology cleanup
-- strong noise may create extra foreground regions
-- low contrast can reduce segmentation reliability
-- partial occlusion may shift the estimated contour, center, and orientation
+### Cause
 
-These are useful portfolio discussion points because they show practical error analysis instead of only ideal-case demos.
+The default YOLO model is trained on general object categories. It is not specialized for arbitrary industrial pick objects.
 
-## Step 9 YOLO observations
+### Impact
 
-YOLO detects common COCO-like objects well, but it can fail on domain-specific or unusual objects such as a stylized bottle, a toy car, or a computer mouse viewed from unusual angles. It can also assign incorrect COCO classes to synthetic geometric objects.
+The system may need OpenCV fallback segmentation or a custom-trained detector for the target domain.
 
-This is acceptable for the project because Step 9 demonstrates the detection interface, while Step 10 integrates detection with classical geometric pose estimation and fallback segmentation.
+### Possible fixes
 
-## Step 10 integrated-pipeline limitations
+- train a custom YOLO detector on pick-object images
+- use YOLO segmentation models instead of bounding-box detection
+- add a custom dataset of industrial parts
+- use segmentation-first methods for unknown objects
 
-The integrated pipeline uses classical segmentation inside YOLO boxes or across the full image. It can struggle when:
+---
 
-- object and background have similar color or brightness
-- the object is dark on a dark background
-- the YOLO box includes too much background
-- the object has holes, thin structures, or multiple disconnected components
-- the YOLO class is wrong but the box still overlaps the object
+## 2. OpenCV fallback can include background
 
-These are realistic limitations and motivate future improvements such as trained segmentation masks, SAM-style segmentation, or custom YOLO training on industrial pick objects.
+### Observation
+
+When an object and background have similar intensity or color, full-image OpenCV fallback can segment parts of the background.
+
+### Cause
+
+The fallback uses classical thresholding and morphology. This is simple and fast, but not semantic.
+
+### Impact
+
+The estimated contour may include background texture, causing incorrect center and orientation.
+
+### Possible fixes
+
+- improve preprocessing
+- add background normalization
+- use color-space thresholding
+- restrict segmentation to user-selected or detected regions
+- use learned segmentation masks
+
+---
+
+## 3. Dark objects on dark backgrounds
+
+### Observation
+
+Dark objects on a black or dark textured surface can produce noisy contours.
+
+### Cause
+
+Foreground/background contrast is weak.
+
+### Impact
+
+The object contour may be fragmented or mixed with background texture.
+
+### Possible fixes
+
+- improve lighting
+- use a contrasting surface
+- add adaptive thresholding
+- use edge-aware segmentation
+- train a custom model
+
+---
+
+## 4. Partial occlusion
+
+### Observation
+
+Robustness evaluation showed that partial occlusion can create very large center and orientation errors.
+
+### Cause
+
+The visible contour no longer represents the full object geometry.
+
+### Impact
+
+The estimated center and orientation can shift toward the visible region.
+
+### Possible fixes
+
+- detect occlusion and reject low-confidence estimates
+- use object-shape priors
+- use instance segmentation
+- use multiple camera views
+- use temporal tracking across frames
+
+---
+
+## 5. Symmetric objects have ambiguous orientation
+
+### Observation
+
+Round cups, bowls, circular caps, and near-symmetric shapes do not have a meaningful unique orientation.
+
+### Cause
+
+The principal axis may be unstable when the object has rotational symmetry.
+
+### Impact
+
+Orientation estimates can change even when the center is correct.
+
+### Possible fixes
+
+- report orientation confidence
+- suppress orientation for circular objects
+- use object-specific orientation rules
+- estimate handle direction for cups/bowls when visible
+
+---
+
+## 6. Thin objects and holes
+
+### Observation
+
+Thin tools or objects with holes can produce contours where the geometric center differs from a good grasp point.
+
+### Cause
+
+Contour moments and PCA describe visible 2D shape, not grasp stability.
+
+### Impact
+
+The pick point may be visually centered but not mechanically ideal.
+
+### Possible fixes
+
+- add object-specific pick-point rules
+- use skeletonization for thin tools
+- estimate graspable regions instead of only center
+- train a grasp-point model
+
+---
+
+## Current conclusion
+
+The pipeline is a strong portfolio demonstration because it includes:
+
+- successful synthetic evaluation
+- real-image demos
+- robustness testing
+- documented failure cases
+- a clear path toward production improvements
+
+It is not presented as a production robotic grasping system. It is a practical perception prototype.

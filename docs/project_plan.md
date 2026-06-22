@@ -8,19 +8,11 @@ Vision-Based Pick-Point Estimation for Robotic Manipulation
 
 This project estimates 2D pick points and object orientations from RGB images without requiring a robot arm, depth camera, or external equipment.
 
-## Final demo
+## Final status
 
-The final demo allows a user to upload an image, run the perception pipeline, and view:
+All planned steps are complete.
 
-- detected object bounding boxes, when YOLO is enabled
-- object contours or masks
-- center point
-- estimated object orientation
-- recommended pick point
-- inference summary
-- saved/downloadable annotated output image
-
-## Roadmap
+## Completed roadmap
 
 1. Define scope and create repository foundation. **Done**
 2. Build synthetic image generator with ground-truth labels. **Done**
@@ -32,34 +24,27 @@ The final demo allows a user to upload an image, run the perception pipeline, an
 8. Add robustness evaluation. **Done**
 9. Add YOLO-based object detection path. **Done**
 10. Integrate detection with pose estimation. **Done**
-11. Build Streamlit GUI. **Current**
-12. Polish GitHub repository and recruiter-facing README.
+11. Build Streamlit GUI. **Done**
+12. Polish GitHub repository and recruiter-facing README. **Done**
 
-## Step 11 Streamlit GUI
+## Final demo behavior
 
-Step 11 adds an interactive demo app.
+The final demo supports:
 
-The command is:
+- upload image
+- choose YOLO + OpenCV fallback or OpenCV-only mode
+- estimate object center
+- estimate orientation
+- visualize contour, bounding box, center, pick point, and orientation axis
+- download annotated image
+- download result CSV
 
-```powershell
-streamlit run app\streamlit_app.py
-```
+## Final repository strengths
 
-The app supports:
-
-- image upload
-- YOLO + OpenCV fallback mode
-- OpenCV-only mode
-- YOLO confidence threshold
-- optional YOLO class filter
-- pick-point and orientation visualization
-- metrics table
-- annotated image download
-- result CSV download
-
-Generated app outputs:
-
-```text
-outputs/streamlit/uploads/
-outputs/streamlit/annotated/
-```
+- practical robotics perception framing
+- measurable evaluation metrics
+- robustness and failure-case analysis
+- real-image demo path
+- clean Python package layout
+- unit tests
+- professional documentation
