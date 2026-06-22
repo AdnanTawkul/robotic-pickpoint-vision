@@ -22,8 +22,8 @@ The final demo will allow a user to upload an image, run the perception pipeline
 
 ## Roadmap
 
-1. Define scope and create repository foundation.
-2. Build synthetic image generator with ground-truth labels.
+1. Define scope and create repository foundation. **Done**
+2. Build synthetic image generator with ground-truth labels. **Current**
 3. Implement classical OpenCV pose estimation on synthetic objects.
 4. Add visualization utilities.
 5. Add first command-line demo.
@@ -34,3 +34,30 @@ The final demo will allow a user to upload an image, run the perception pipeline
 10. Build Streamlit GUI.
 11. Add tests, examples, and failure-case analysis.
 12. Polish GitHub repository and recruiter-facing README.
+
+## Synthetic dataset design
+
+The synthetic dataset contains one object per image. Each generated image has a matching binary mask and ground-truth label.
+
+Generated files:
+
+```text
+data/synthetic/
+├── images/
+├── masks/
+├── labels.csv
+├── labels.json
+└── preview_grid.png
+```
+
+Each label includes:
+
+- image name
+- object shape
+- center point
+- orientation angle in degrees
+- pick point
+- bounding box
+- image dimensions
+
+The first version uses rotated rectangles and ellipses. This is enough to test 2D center and orientation estimation before moving to real images and YOLO.
