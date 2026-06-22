@@ -24,10 +24,12 @@ Thumbs.db
 outputs/annotated/*
 outputs/metrics/*
 outputs/robustness/*
+outputs/streamlit/*
 data/synthetic/*
 !outputs/annotated/.gitkeep
 !outputs/metrics/.gitkeep
 !outputs/robustness/.gitkeep
+!outputs/streamlit/.gitkeep
 !data/synthetic/.gitkeep
 
 # Model weights and exported models

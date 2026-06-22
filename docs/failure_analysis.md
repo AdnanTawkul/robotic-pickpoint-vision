@@ -23,30 +23,6 @@ For each failure case, we will document:
 - possible fix
 - whether the issue is acceptable for a demo portfolio project
 
-## Step 7 robustness cases
-
-Step 7 introduces controlled visual degradations. These are not yet full quantitative failures; they are visual stress-test inputs that will be used by the next evaluation step.
-
-### Blur
-
-Expected risk: contour boundaries become softer, which can shift segmentation and orientation estimation.
-
-### Noise
-
-Expected risk: thresholding and contour extraction may detect small noisy blobs unless preprocessing is robust.
-
-### Brightness changes
-
-Expected risk: very dark or very bright images may reduce foreground/background separability.
-
-### Contrast changes
-
-Expected risk: low contrast can make segmentation unstable, while very high contrast can amplify artifacts.
-
-### Partial occlusion
-
-Expected risk: the visible contour may no longer represent the full object geometry, causing center and orientation estimates to shift.
-
 ## Step 8 quantitative robustness evaluation
 
 Step 8 evaluates degraded RGB images using classical image-based segmentation. This is intentionally harder than the clean-mask baseline.
@@ -60,3 +36,21 @@ Expected observations:
 - partial occlusion may shift the estimated contour, center, and orientation
 
 These are useful portfolio discussion points because they show practical error analysis instead of only ideal-case demos.
+
+## Step 9 YOLO observations
+
+YOLO detects common COCO-like objects well, but it can fail on domain-specific or unusual objects such as a stylized bottle, a toy car, or a computer mouse viewed from unusual angles. It can also assign incorrect COCO classes to synthetic geometric objects.
+
+This is acceptable for the project because Step 9 demonstrates the detection interface, while Step 10 integrates detection with classical geometric pose estimation and fallback segmentation.
+
+## Step 10 integrated-pipeline limitations
+
+The integrated pipeline uses classical segmentation inside YOLO boxes or across the full image. It can struggle when:
+
+- object and background have similar color or brightness
+- the object is dark on a dark background
+- the YOLO box includes too much background
+- the object has holes, thin structures, or multiple disconnected components
+- the YOLO class is wrong but the box still overlaps the object
+
+These are realistic limitations and motivate future improvements such as trained segmentation masks, SAM-style segmentation, or custom YOLO training on industrial pick objects.

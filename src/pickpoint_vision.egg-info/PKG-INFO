@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: pickpoint-vision
+Version: 0.1.0
+Summary: Vision-based pick-point and orientation estimation for robotic manipulation.
+Author: Adnan Tawkul
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: opencv-python>=4.9.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: torch>=2.2.0
+Requires-Dist: ultralytics>=8.2.0
+Requires-Dist: streamlit>=1.35.0
+Requires-Dist: pandas>=2.2.0
+Requires-Dist: matplotlib>=3.8.0
+Requires-Dist: Pillow>=10.3.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+
 # Vision-Based Pick-Point Estimation for Robotic Manipulation
 
 A practical computer-vision portfolio project for estimating object pick points and orientations from 2D images.
@@ -21,8 +40,6 @@ Completed:
 - robustness image transformations
 - image-based robustness evaluation
 - YOLO-based detection path
-- integrated detection + pose-estimation pipeline
-- Streamlit GUI
 
 ## Planned final features
 
@@ -68,26 +85,28 @@ For the YOLO path, make sure Ultralytics is installed:
 py -m pip install ultralytics
 ```
 
-## Run the Streamlit app
-
-```powershell
-streamlit run app\streamlit_app.py
-```
-
-The app supports:
-
-- image upload
-- YOLO + OpenCV fallback mode
-- OpenCV-only mode
-- YOLO confidence threshold
-- optional YOLO class filter
-- annotated image download
-- result CSV download
-
-## Run the command-line demo
+## Run the current demo
 
 ```powershell
 py scripts\run_demo.py --regenerate
+```
+
+The demo creates annotated outputs here:
+
+```text
+outputs/annotated/demo/
+```
+
+Open this file to inspect the visual result:
+
+```text
+outputs/annotated/demo/demo_grid.png
+```
+
+The demo summary is saved here:
+
+```text
+outputs/metrics/demo_summary.json
 ```
 
 ## Run evaluation
@@ -96,39 +115,69 @@ py scripts\run_demo.py --regenerate
 py scripts\evaluate.py
 ```
 
-## Run robustness evaluation
+Generated reports:
+
+```text
+outputs/metrics/evaluation/per_sample_metrics.csv
+outputs/metrics/evaluation/evaluation_summary.json
+outputs/metrics/evaluation/evaluation_report.md
+```
+
+## Generate robustness variants
 
 ```powershell
 py scripts\create_robustness_variants.py --clear
+```
+
+Generated robustness outputs:
+
+```text
+outputs/robustness/step7/images/
+outputs/robustness/step7/robustness_metadata.csv
+outputs/robustness/step7/robustness_metadata.json
+outputs/robustness/step7/robustness_preview_grid.png
+```
+
+## Run robustness evaluation
+
+```powershell
 py scripts\evaluate_robustness.py
 ```
 
+Generated robustness evaluation outputs:
+
+```text
+outputs/metrics/robustness/per_variant_metrics.csv
+outputs/metrics/robustness/robustness_summary.json
+outputs/metrics/robustness/robustness_report.md
+outputs/metrics/robustness/robustness_evaluation_grid.png
+```
+
 ## Run YOLO detection
+
+For a quick technical test:
+
+```powershell
+py scripts\run_yolo_detection.py --input-dir data\synthetic\images --max-images 5
+```
+
+For a better real-image detection demo, place phone images in:
+
+```text
+data/sample_images/
+```
+
+Then run:
 
 ```powershell
 py scripts\run_yolo_detection.py --input-dir data\sample_images
 ```
 
-## Run integrated pick-point pipeline
-
-For real images:
-
-```powershell
-py scripts\run_integrated_pipeline.py --input-dir data\sample_images
-```
-
-For a deterministic OpenCV-only test on synthetic images:
-
-```powershell
-py scripts\run_integrated_pipeline.py --input-dir data\synthetic\images --no-yolo --max-images 5
-```
-
-Generated integrated outputs:
+Generated YOLO outputs:
 
 ```text
-outputs/annotated/integrated/integrated_pickpoint_grid.png
-outputs/metrics/integrated_pickpoints.csv
-outputs/metrics/integrated_pickpoints.json
+outputs/annotated/yolo/yolo_detection_grid.png
+outputs/metrics/yolo_detections.csv
 ```
 
 ## Current baseline result
@@ -149,10 +198,6 @@ Example result from the synthetic demo:
 
 The image-based OpenCV path is robust to blur, brightness, contrast, and noise on the synthetic scenes, but partial occlusion creates large errors. This is a useful failure case for the portfolio because it shows practical limitations and motivates stronger segmentation/detection.
 
-## YOLO result summary
-
-The YOLO path works as an optional detection front end. It may miss unusual objects or assign synthetic shapes to incorrect COCO classes. This is expected for an off-the-shelf model and is documented as a limitation. The integrated pipeline can still use OpenCV fallback segmentation when YOLO is not useful.
-
 ## Run tests
 
 ```powershell
@@ -170,10 +215,8 @@ robotic-pickpoint-vision/
 ├── src/
 │   └── pickpoint_vision/
 │       ├── __init__.py
-│       ├── app_utils.py
 │       ├── detection.py
 │       ├── evaluation.py
-│       ├── integrated_pipeline.py
 │       ├── pipeline.py
 │       ├── pose_estimation.py
 │       ├── robustness.py
@@ -182,13 +225,28 @@ robotic-pickpoint-vision/
 │       ├── synthetic_data.py
 │       ├── utils.py
 │       └── visualization.py
-├── app/
-│   └── streamlit_app.py
 ├── scripts/
+│   ├── create_robustness_variants.py
+│   ├── create_synthetic_dataset.py
+│   ├── evaluate.py
+│   ├── evaluate_robustness.py
+│   ├── run_demo.py
+│   ├── run_pose_estimation.py
+│   ├── run_yolo_detection.py
+│   ├── verify_setup.py
+│   └── visualize_synthetic_results.py
+├── app/
 ├── tests/
 ├── data/
+│   ├── sample_images/
+│   └── synthetic/
 ├── outputs/
+│   ├── annotated/
+│   ├── metrics/
+│   └── robustness/
 └── docs/
+    ├── project_plan.md
+    └── failure_analysis.md
 ```
 
 ## License
