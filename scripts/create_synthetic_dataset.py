@@ -1,4 +1,4 @@
-"""Create a synthetic dataset for pick-point estimation.
+r"""Create a synthetic dataset for pick-point estimation.
 
 Run from the repository root:
 

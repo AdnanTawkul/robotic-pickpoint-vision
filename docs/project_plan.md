@@ -23,9 +23,9 @@ The final demo will allow a user to upload an image, run the perception pipeline
 ## Roadmap
 
 1. Define scope and create repository foundation. **Done**
-2. Build synthetic image generator with ground-truth labels. **Current**
-3. Implement classical OpenCV pose estimation on synthetic objects.
-4. Add visualization utilities.
+2. Build synthetic image generator with ground-truth labels. **Done**
+3. Implement classical OpenCV pose estimation on synthetic objects. **Done**
+4. Add visualization utilities. **Current**
 5. Add first command-line demo.
 6. Add evaluation metrics.
 7. Add robustness transformations and robustness evaluation.
@@ -61,3 +61,46 @@ Each label includes:
 - image dimensions
 
 The first version uses rotated rectangles and ellipses. This is enough to test 2D center and orientation estimation before moving to real images and YOLO.
+
+## Step 3 pose-estimation baseline
+
+Step 3 estimates 2D pose from the synthetic binary masks.
+
+Methods used:
+
+- largest contour extraction with OpenCV
+- center estimation using image moments
+- orientation estimation using PCA over contour points
+- orientation estimation using `cv2.minAreaRect`
+- pick point defined as the estimated object center
+
+The output CSV is saved to:
+
+```text
+outputs/metrics/pose_estimation_step3.csv
+```
+
+This gives us a clean baseline before we add visualization, image-based segmentation, robustness testing, and YOLO.
+
+## Step 4 visualization baseline
+
+Step 4 creates annotated result images that show:
+
+- object contour
+- axis-aligned bounding box
+- estimated center point
+- recommended pick point
+- estimated orientation axis
+- center and angle text label
+
+The output images are saved to:
+
+```text
+outputs/annotated/step4/
+```
+
+The preview grid is saved to:
+
+```text
+outputs/annotated/step4/annotation_grid.png
+```
