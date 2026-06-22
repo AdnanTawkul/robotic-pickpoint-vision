@@ -26,8 +26,8 @@ The final demo will allow a user to upload an image, run the perception pipeline
 2. Build synthetic image generator with ground-truth labels. **Done**
 3. Implement classical OpenCV pose estimation on synthetic objects. **Done**
 4. Add visualization utilities. **Done**
-5. Add first command-line demo. **Current**
-6. Add evaluation metrics.
+5. Add first command-line demo. **Done**
+6. Add evaluation metrics. **Current**
 7. Add robustness transformations and robustness evaluation.
 8. Add YOLO-based object detection path.
 9. Integrate detection with pose estimation.
@@ -127,3 +127,27 @@ Generated demo outputs:
 outputs/annotated/demo/demo_grid.png
 outputs/metrics/demo_summary.json
 ```
+
+## Step 6 evaluation reports
+
+Step 6 adds a proper evaluation command:
+
+```powershell
+py scripts\evaluate.py
+```
+
+Generated evaluation outputs:
+
+```text
+outputs/metrics/evaluation/per_sample_metrics.csv
+outputs/metrics/evaluation/evaluation_summary.json
+outputs/metrics/evaluation/evaluation_report.md
+```
+
+The report includes:
+
+- mean, median, P90, and max center error
+- mean, median, P90, and max orientation error
+- inference-time statistics
+- pass-rate checks against simple thresholds
+- worst-case sample names

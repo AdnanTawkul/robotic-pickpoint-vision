@@ -17,6 +17,7 @@ Completed:
 - OpenCV pose estimation from masks
 - visualization utilities
 - first end-to-end command-line demo
+- CSV, JSON, and Markdown evaluation reports
 
 ## Planned final features
 
@@ -80,6 +81,34 @@ The demo summary is saved here:
 outputs/metrics/demo_summary.json
 ```
 
+## Run evaluation
+
+```powershell
+py scripts\evaluate.py
+```
+
+Generated reports:
+
+```text
+outputs/metrics/evaluation/per_sample_metrics.csv
+outputs/metrics/evaluation/evaluation_summary.json
+outputs/metrics/evaluation/evaluation_report.md
+```
+
+## Current baseline result
+
+On the default synthetic dataset, the current mask-based baseline typically achieves sub-pixel center error and low orientation error.
+
+Example result from the synthetic demo:
+
+| Metric | Value |
+|---|---:|
+| Mean center error | 0.334 px |
+| Max center error | 0.805 px |
+| Mean PCA orientation error | 0.832 deg |
+| Mean minAreaRect orientation error | 2.776 deg |
+| Mean pose-estimation time | 1.899 ms/image |
+
 ## Run tests
 
 ```powershell
@@ -97,6 +126,7 @@ robotic-pickpoint-vision/
 ├── src/
 │   └── pickpoint_vision/
 │       ├── __init__.py
+│       ├── evaluation.py
 │       ├── pipeline.py
 │       ├── pose_estimation.py
 │       ├── synthetic_data.py
@@ -104,6 +134,7 @@ robotic-pickpoint-vision/
 │       └── visualization.py
 ├── scripts/
 │   ├── create_synthetic_dataset.py
+│   ├── evaluate.py
 │   ├── run_demo.py
 │   ├── run_pose_estimation.py
 │   ├── verify_setup.py
