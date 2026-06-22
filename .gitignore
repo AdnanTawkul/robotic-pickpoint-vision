@@ -23,9 +23,11 @@ Thumbs.db
 # Large/generated project outputs
 outputs/annotated/*
 outputs/metrics/*
+outputs/robustness/*
 data/synthetic/*
 !outputs/annotated/.gitkeep
 !outputs/metrics/.gitkeep
+!outputs/robustness/.gitkeep
 !data/synthetic/.gitkeep
 
 # Model weights and exported models

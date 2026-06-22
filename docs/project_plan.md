@@ -27,12 +27,12 @@ The final demo will allow a user to upload an image, run the perception pipeline
 3. Implement classical OpenCV pose estimation on synthetic objects. **Done**
 4. Add visualization utilities. **Done**
 5. Add first command-line demo. **Done**
-6. Add evaluation metrics. **Current**
-7. Add robustness transformations and robustness evaluation.
-8. Add YOLO-based object detection path.
-9. Integrate detection with pose estimation.
-10. Build Streamlit GUI.
-11. Add tests, examples, and failure-case analysis.
+6. Add evaluation metrics. **Done**
+7. Add robustness transformations. **Current**
+8. Add robustness evaluation.
+9. Add YOLO-based object detection path.
+10. Integrate detection with pose estimation.
+11. Build Streamlit GUI.
 12. Polish GitHub repository and recruiter-facing README.
 
 ## Synthetic dataset design
@@ -151,3 +151,28 @@ The report includes:
 - inference-time statistics
 - pass-rate checks against simple thresholds
 - worst-case sample names
+
+## Step 7 robustness transformations
+
+Step 7 adds controlled image transformations for qualitative stress testing:
+
+- Gaussian blur
+- Gaussian noise
+- dark and bright images
+- low and high contrast
+- partial occlusion
+
+The command is:
+
+```powershell
+py scripts\create_robustness_variants.py --clear
+```
+
+Generated outputs:
+
+```text
+outputs/robustness/step7/images/
+outputs/robustness/step7/robustness_metadata.csv
+outputs/robustness/step7/robustness_metadata.json
+outputs/robustness/step7/robustness_preview_grid.png
+```

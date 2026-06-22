@@ -74,6 +74,39 @@ def _create_background(
     return np.clip(noisy_background, 0, 255).astype(np.uint8)
 
 
+def _sample_object_size(
+    image_width: int,
+    image_height: int,
+    rng: random.Random,
+) -> tuple[float, float]:
+    """Sample an object size that safely fits inside the image.
+
+    The earlier generator used fixed object-size ranges. That worked for the
+    default 640x480 images, but could fail for smaller test images when the
+    sampled object was too large for the available vertical margin.
+    """
+    max_long_axis = int(min(210, image_width - 40, image_height - 40))
+    if max_long_axis < 40:
+        raise ValueError(
+            "Image is too small for synthetic object generation. "
+            f"Received width={image_width}, height={image_height}."
+        )
+
+    min_long_axis = min(90, max_long_axis)
+    long_axis = float(rng.randint(min_long_axis, max_long_axis))
+
+    max_short_axis = int(min(110, long_axis - 10, image_width - 40, image_height - 40))
+    min_short_axis = min(35, max_short_axis)
+    min_short_axis = max(20, min_short_axis)
+
+    if max_short_axis < min_short_axis:
+        max_short_axis = min_short_axis
+
+    short_axis = float(rng.randint(min_short_axis, max_short_axis))
+
+    return long_axis, short_axis
+
+
 def _mask_to_bbox(mask: np.ndarray) -> tuple[int, int, int, int]:
     """Return x, y, width, height for the non-zero region of a mask."""
     nonzero = cv2.findNonZero(mask)
@@ -137,15 +170,27 @@ def generate_synthetic_sample(
 
     shape = rng.choice(["rectangle", "ellipse"])
 
-    width = float(rng.randint(90, 210))
-    height = float(rng.randint(35, 110))
-
-    if height > width:
-        width, height = height, width
+    width, height = _sample_object_size(
+        image_width=image_width,
+        image_height=image_height,
+        rng=rng,
+    )
 
     margin = int(math.ceil(max(width, height) / 2.0)) + 20
-    center_x = float(rng.randint(margin, image_width - margin))
-    center_y = float(rng.randint(margin, image_height - margin))
+    x_min = margin
+    x_max = image_width - margin
+    y_min = margin
+    y_max = image_height - margin
+
+    if x_min > x_max or y_min > y_max:
+        raise ValueError(
+            "Sampled object size cannot fit inside image. "
+            f"image_width={image_width}, image_height={image_height}, "
+            f"width={width}, height={height}, margin={margin}"
+        )
+
+    center_x = float(rng.randint(x_min, x_max))
+    center_y = float(rng.randint(y_min, y_max))
     angle_deg = normalize_angle_deg(rng.uniform(-85.0, 85.0))
 
     color = (
