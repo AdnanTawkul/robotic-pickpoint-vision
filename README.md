@@ -1,12 +1,12 @@
 # Vision-Based Pick-Point Estimation for Robotic Manipulation
 
-A practical computer-vision project for estimating 2D object pick points and orientations from RGB images.
+A practical computer-vision portfolio project for estimating 2D object pick points and orientations from RGB images.
 
 Repository name: `robotic-pickpoint-vision`
 
 ## Recruiter summary
 
-This project demonstrates a robotics-style perception pipeline without requiring a robot arm, depth camera, or external hardware.
+This project demonstrates a robotics-style perception pipeline without requiring a robot arm, depth camera, depth sensor, or external hardware.
 
 The system can:
 
@@ -15,43 +15,38 @@ The system can:
 - evaluate center-point error, orientation error, pass rates, and inference speed
 - stress-test the pipeline under blur, noise, brightness, contrast, and occlusion
 - run YOLO object detection as an optional front end
-- combine YOLO detections with OpenCV pose estimation and fallback segmentation
-- provide an interactive Streamlit demo for image upload and visualization
+- combine YOLO detections with OpenCV segmentation and geometric pose estimation
+- fall back to OpenCV object segmentation when YOLO is not useful
+- provide an interactive Streamlit demo for image upload, visualization, and result export
 
-This repository is intended to show practical computer vision, error analysis, robustness testing, and clean Python software engineering.
+This repository is intended to show practical computer vision, robotics perception thinking, measurable evaluation, robustness testing, failure-case analysis, and clean Python software engineering.
 
 ---
 
 ## Demo preview
 
-After generating demo assets, screenshots can be shown here:
+| Synthetic pose estimation | Robustness evaluation | Integrated pick-point pipeline |
+|---|---|---|
+| ![Synthetic pose estimation demo](docs/assets/synthetic_demo_grid.png) | ![Robustness evaluation demo](docs/assets/robustness_evaluation_grid.png) | ![Integrated pick-point pipeline demo](docs/assets/integrated_pickpoint_grid.png) |
+
+To regenerate these demo assets locally, run:
 
 ```powershell
 py scripts\export_demo_assets.py
 ```
 
-Expected exported assets:
+The exported images are saved under:
 
 ```text
-docs/assets/synthetic_demo_grid.png
-docs/assets/robustness_evaluation_grid.png
-docs/assets/integrated_pickpoint_grid.png
+docs/assets/
 ```
-
-Recommended README screenshots:
-
-| Synthetic pose estimation | Robustness evaluation | Integrated real-image pipeline |
-|---|---|---|
-| `docs/assets/synthetic_demo_grid.png` | `docs/assets/robustness_evaluation_grid.png` | `docs/assets/integrated_pickpoint_grid.png` |
-
-> Before committing real-image screenshots, make sure the images are safe to publish.
 
 ---
 
 ## Pipeline overview
 
 ```text
-Input image
+Input RGB image
    |
    |-- Optional YOLO detection
    |       |
@@ -76,7 +71,7 @@ The project supports two complementary perception paths:
    Uses generated masks and labels to measure accuracy against known ground truth.
 
 2. **Real-image demo path**  
-   Uses YOLO when available and falls back to OpenCV segmentation when YOLO fails or is not useful.
+   Uses YOLO when available and falls back to OpenCV segmentation when YOLO does not find a usable object.
 
 ---
 
@@ -87,18 +82,27 @@ The project supports two complementary perception paths:
 - OpenCV contour-based center estimation
 - PCA-based orientation estimation
 - `minAreaRect` orientation baseline
-- Pick point visualization
-- Annotated output image saving
-- CSV, JSON, and Markdown evaluation reports
+- Real-image local-background segmentation
+- YOLO detection path using Ultralytics
+- YOLO inference controls:
+  - confidence threshold
+  - image size
+  - IoU threshold
+  - test-time augmentation
+  - class filtering
+  - maximum detections
+  - CPU/CUDA device selection
+- Integrated YOLO + OpenCV pick-point pipeline
+- Streamlit GUI for upload-based demos
+- Annotated image saving
+- CSV, JSON, and Markdown reports
 - Robustness tests for:
   - blur
   - noise
   - brightness
   - contrast
   - partial occlusion
-- YOLO detection path using Ultralytics
-- Integrated YOLO + OpenCV pipeline
-- Streamlit GUI for upload-based demos
+- Failure-case analysis and documented limitations
 - Unit tests for core modules
 
 ---
@@ -125,11 +129,35 @@ For YOLO support:
 py -m pip install ultralytics
 ```
 
+### Optional CUDA support
+
+The project runs on CPU, but YOLO inference is faster with CUDA-enabled PyTorch.
+
+Check your CUDA/PyTorch setup:
+
+```powershell
+py scripts\check_cuda_setup.py
+```
+
+If PyTorch reports `torch.cuda.is_available(): False`, install CUDA-enabled PyTorch using the official PyTorch selector:
+
+```text
+https://pytorch.org/get-started/locally/
+```
+
+Then verify again:
+
+```powershell
+py scripts\check_cuda_setup.py
+```
+
+When CUDA is available, YOLO commands using `--device auto` should resolve to GPU device `0`.
+
 ---
 
 ## Quick start
 
-Run the full synthetic demo:
+Run the synthetic demo:
 
 ```powershell
 py scripts\run_demo.py --regenerate
@@ -219,8 +247,16 @@ outputs/metrics/robustness/robustness_evaluation_grid.png
 
 ### Run YOLO detection
 
+Default detection:
+
 ```powershell
-py scripts\run_yolo_detection.py --input-dir data\sample_images
+py scripts\run_yolo_detection.py --input-dir data\sample_images --device auto
+```
+
+More sensitive detection for difficult tabletop images:
+
+```powershell
+py scripts\run_yolo_detection.py --input-dir data\sample_images --model yolov8s.pt --confidence 0.10 --img-size 1280 --augment --device auto
 ```
 
 Outputs:
@@ -235,10 +271,16 @@ outputs/metrics/yolo_detections.csv
 For real images:
 
 ```powershell
-py scripts\run_integrated_pipeline.py --input-dir data\sample_images
+py scripts\run_integrated_pipeline.py --input-dir data\sample_images --device auto
 ```
 
-For deterministic OpenCV-only testing:
+For a more sensitive YOLO + OpenCV run:
+
+```powershell
+py scripts\run_integrated_pipeline.py --input-dir data\sample_images --model yolov8s.pt --confidence 0.10 --img-size 1280 --augment --device auto
+```
+
+For deterministic OpenCV-only testing on synthetic images:
 
 ```powershell
 py scripts\run_integrated_pipeline.py --input-dir data\synthetic\images --no-yolo --max-images 5
@@ -263,8 +305,14 @@ The app supports:
 - image upload
 - YOLO + OpenCV fallback mode
 - OpenCV-only mode
+- YOLO model selection
 - YOLO confidence threshold
+- YOLO image size
+- YOLO IoU threshold
+- YOLO test-time augmentation
 - optional YOLO class filter
+- maximum detections
+- CPU/CUDA device selection
 - image display-width control
 - annotated image download
 - result CSV download
@@ -291,26 +339,25 @@ On the default synthetic dataset, the mask-based baseline typically achieves:
 
 The image-based OpenCV path is robust to blur, brightness, contrast, and noise on the synthetic scenes. Partial occlusion is the dominant failure case.
 
-Example grouped results:
-
 | Transform | Observation |
 |---|---|
 | Blur | Stable center and orientation estimation |
 | Noise | Stable after morphology cleanup |
-| Brightness | Stable on synthetic contrast |
+| Brightness | Stable when foreground/background contrast remains usable |
 | Contrast | Stable unless foreground/background separation becomes weak |
-| Occlusion | Large center and orientation errors |
+| Occlusion | Large center and orientation errors can occur |
 
 ### Real-image integrated pipeline
 
-The real-image integrated pipeline works as a demonstration of YOLO + geometric fallback. It can estimate pick points on user-provided images, but quality depends on segmentation quality and object/background contrast.
+The real-image integrated pipeline is a demonstration of learned detection plus classical geometric pose estimation. It can estimate pick points on user-provided images, but result quality depends on segmentation quality, object/background contrast, and whether YOLO produces a useful detection.
 
 Observed limitations:
 
-- YOLO may miss unusual objects or objects outside COCO-like categories.
-- OpenCV fallback can include background when object and background are visually similar.
-- Thin or reflective objects may produce unstable contours.
+- Off-the-shelf YOLO may miss unusual objects or assign imperfect COCO classes.
+- Full-image OpenCV fallback can include background when object and background are visually similar.
+- Thin, reflective, transparent, or dark-on-dark objects can produce unstable contours.
 - Symmetric objects can have ambiguous orientation.
+- Partial occlusion can shift the estimated center and orientation.
 
 These limitations are documented intentionally because practical perception projects should show both successful cases and failure cases.
 
@@ -324,11 +371,7 @@ Run:
 py -m pytest
 ```
 
-Expected after Step 11:
-
-```text
-25 passed
-```
+The test suite covers synthetic data generation, pose estimation, visualization, evaluation, robustness transformations, segmentation, YOLO detection utilities, integrated pipeline behavior, Streamlit helpers, and CUDA device resolution.
 
 ---
 
@@ -348,6 +391,7 @@ robotic-pickpoint-vision/
 │       ├── integrated_pipeline.py
 │       ├── pipeline.py
 │       ├── pose_estimation.py
+│       ├── real_segmentation.py
 │       ├── robustness.py
 │       ├── robustness_evaluation.py
 │       ├── segmentation.py
@@ -357,6 +401,7 @@ robotic-pickpoint-vision/
 ├── app/
 │   └── streamlit_app.py
 ├── scripts/
+│   ├── check_cuda_setup.py
 │   ├── create_synthetic_dataset.py
 │   ├── create_robustness_variants.py
 │   ├── evaluate.py
@@ -379,12 +424,14 @@ robotic-pickpoint-vision/
 
 - Practical image-processing pipeline design
 - OpenCV contour and PCA pose estimation
+- Real-image segmentation from local background contrast
 - Synthetic data generation with known labels
 - Quantitative evaluation rather than only visual demos
-- Robustness and failure-case analysis
-- YOLO integration
+- Robustness testing and failure-case analysis
+- YOLO integration and inference tuning
+- CUDA/CPU deployment awareness
 - Streamlit app development
-- Clean Python packaging and testing
+- Clean Python packaging and tests
 - GitHub-ready documentation
 
 ---
@@ -392,9 +439,10 @@ robotic-pickpoint-vision/
 ## Future improvements
 
 - Train a custom detector on industrial pick objects
-- Add segmentation models such as YOLO segmentation or SAM-style masks
-- Improve background subtraction for dark objects on dark surfaces
-- Add multiple-object synthetic scenes
+- Add YOLO segmentation or SAM-style masks
+- Add object-specific pick-point rules
+- Improve orientation confidence scoring
+- Add multiple-object pick ranking
 - Add automatic failure-case ranking
 - Export ONNX models for deployment-style demos
 - Add optional depth simulation from monocular cues or synthetic data
