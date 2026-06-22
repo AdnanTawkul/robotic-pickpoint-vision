@@ -15,11 +15,14 @@ The system can:
 - evaluate center-point error, orientation error, pass rates, and inference speed
 - stress-test the pipeline under blur, noise, brightness, contrast, and occlusion
 - run YOLO object detection as an optional front end
+- tune YOLO inference with confidence, image size, IoU, augmentation, class filters, max detections, and CPU/CUDA device selection
 - combine YOLO detections with OpenCV segmentation and geometric pose estimation
 - fall back to OpenCV object segmentation when YOLO is not useful
-- provide an interactive Streamlit demo for image upload, visualization, and result export
+- improve real-image masks using local-background segmentation
+- interactively tune contours in Streamlit and immediately see how mask quality affects pick point and orientation
+- export annotated images, CSV results, JSON summaries, and evaluation reports
 
-This repository is intended to show practical computer vision, robotics perception thinking, measurable evaluation, robustness testing, failure-case analysis, and clean Python software engineering.
+This repository is intended to show practical computer vision, robotics perception thinking, measurable evaluation, robustness testing, failure-case analysis, interactive debugging tools, and clean Python software engineering.
 
 ---
 
@@ -43,6 +46,26 @@ docs/assets/
 
 ---
 
+## Why this project is useful
+
+Robotic pick-point estimation is more than drawing a bounding box around an object. A robot-style perception system also needs to estimate where to grasp, how the object is oriented, and when the result may be unreliable.
+
+This project demonstrates that full workflow:
+
+| Capability | Why it matters |
+|---|---|
+| Synthetic data generation | Provides controlled scenes with ground truth for measurable evaluation |
+| OpenCV pose estimation | Shows classical geometry-based computer vision skills |
+| YOLO detection | Adds a modern learned detector for real RGB images |
+| Local-background segmentation | Improves object masks when the YOLO box alone is not enough |
+| Robustness evaluation | Measures behavior under blur, noise, lighting changes, and occlusion |
+| Live contour tuning | Makes failure cases explainable and lets the user inspect how mask quality affects pose |
+| Streamlit GUI | Turns the project into a practical, demo-ready application |
+| CUDA diagnostics | Shows awareness of deployment and GPU acceleration issues |
+| Tests and reports | Makes the repository easier to review, reproduce, and trust |
+
+---
+
 ## Pipeline overview
 
 ```text
@@ -54,7 +77,8 @@ Input RGB image
    |
    |-- OpenCV segmentation
    |       |
-   |       └── binary foreground mask
+   |       ├── local-background foreground mask
+   |       └── optional live contour tuning in Streamlit
    |
    |-- Contour extraction
    |       |
@@ -65,13 +89,16 @@ Input RGB image
    └── annotated output + CSV/JSON metrics
 ```
 
-The project supports two complementary perception paths:
+The project supports three complementary perception workflows:
 
 1. **Synthetic/evaluation path**  
    Uses generated masks and labels to measure accuracy against known ground truth.
 
-2. **Real-image demo path**  
+2. **Real-image automatic path**  
    Uses YOLO when available and falls back to OpenCV segmentation when YOLO does not find a usable object.
+
+3. **Live contour-tuning path**  
+   Lets the user interactively adjust the segmentation mask and immediately rerun contour-based pose estimation without rerunning the full YOLO pipeline.
 
 ---
 
@@ -83,6 +110,12 @@ The project supports two complementary perception paths:
 - PCA-based orientation estimation
 - `minAreaRect` orientation baseline
 - Real-image local-background segmentation
+- Interactive contour tuning for real images
+- Streamlit debug views for:
+  - original image
+  - local-background distance image
+  - tuned binary mask
+  - final contour, orientation, and pick point
 - YOLO detection path using Ultralytics
 - YOLO inference controls:
   - confidence threshold
@@ -92,8 +125,9 @@ The project supports two complementary perception paths:
   - class filtering
   - maximum detections
   - CPU/CUDA device selection
+- CUDA setup diagnostic script
 - Integrated YOLO + OpenCV pick-point pipeline
-- Streamlit GUI for upload-based demos
+- Streamlit GUI with automatic and live-tuning workflows
 - Annotated image saving
 - CSV, JSON, and Markdown reports
 - Robustness tests for:
@@ -303,8 +337,9 @@ streamlit run app\streamlit_app.py
 The app supports:
 
 - image upload
-- YOLO + OpenCV fallback mode
+- automatic YOLO + OpenCV fallback mode
 - OpenCV-only mode
+- live contour tuning mode
 - YOLO model selection
 - YOLO confidence threshold
 - YOLO image size
@@ -316,6 +351,51 @@ The app supports:
 - image display-width control
 - annotated image download
 - result CSV download
+
+---
+
+## Streamlit workflows
+
+The Streamlit app is designed for both simple demos and deeper computer-vision debugging.
+
+### Automatic pipeline
+
+The automatic workflow runs the full perception stack:
+
+```text
+image upload -> optional YOLO detection -> OpenCV segmentation -> contour pose estimation -> annotated result
+```
+
+This is useful for a quick recruiter demo because the user can upload an image and immediately see a pick point, orientation axis, object contour, and result table.
+
+### Live contour tuning
+
+The live contour tuning workflow lets the user adjust the segmentation mask interactively. Slider changes rerun the lightweight OpenCV contour step immediately.
+
+Available tuning controls:
+
+| Control | Why it is useful |
+|---|---|
+| Foreground sensitivity | Includes more or fewer pixels in the object mask |
+| Blur size | Reduces noise before thresholding |
+| Open kernel | Removes small false foreground speckles |
+| Close kernel | Fills holes and gaps inside the object mask |
+| Erode iterations | Shrinks an overly large mask |
+| Dilate iterations | Expands an overly small mask |
+| Minimum contour area | Filters tiny false contours |
+| Contour smoothing | Reduces jagged contour boundaries |
+| Invert mask | Helps when the background is selected instead of the object |
+
+The live view displays:
+
+```text
+Original image
+Local background distance image
+Tuned binary mask
+Final contour + pick point
+```
+
+This is useful because real-world perception often fails because of imperfect segmentation, not because of the pose-estimation math. The live tuning view makes that relationship visible and helps explain how the mask affects center, orientation, contour area, and pick-point quality.
 
 ---
 
@@ -358,6 +438,7 @@ Observed limitations:
 - Thin, reflective, transparent, or dark-on-dark objects can produce unstable contours.
 - Symmetric objects can have ambiguous orientation.
 - Partial occlusion can shift the estimated center and orientation.
+- Live contour tuning can improve the final mask, but it is an interactive debugging aid rather than a replacement for a domain-trained detector.
 
 These limitations are documented intentionally because practical perception projects should show both successful cases and failure cases.
 
@@ -371,7 +452,7 @@ Run:
 py -m pytest
 ```
 
-The test suite covers synthetic data generation, pose estimation, visualization, evaluation, robustness transformations, segmentation, YOLO detection utilities, integrated pipeline behavior, Streamlit helpers, and CUDA device resolution.
+The test suite covers synthetic data generation, pose estimation, visualization, evaluation, robustness transformations, segmentation, contour tuning, YOLO detection utilities, integrated pipeline behavior, Streamlit helpers, and CUDA device resolution.
 
 ---
 
@@ -386,6 +467,7 @@ robotic-pickpoint-vision/
 ├── src/
 │   └── pickpoint_vision/
 │       ├── app_utils.py
+│       ├── contour_tuning.py
 │       ├── detection.py
 │       ├── evaluation.py
 │       ├── integrated_pipeline.py
@@ -425,6 +507,7 @@ robotic-pickpoint-vision/
 - Practical image-processing pipeline design
 - OpenCV contour and PCA pose estimation
 - Real-image segmentation from local background contrast
+- Interactive contour tuning and visual debugging
 - Synthetic data generation with known labels
 - Quantitative evaluation rather than only visual demos
 - Robustness testing and failure-case analysis
@@ -441,6 +524,7 @@ robotic-pickpoint-vision/
 - Train a custom detector on industrial pick objects
 - Add YOLO segmentation or SAM-style masks
 - Add object-specific pick-point rules
+- Add save/load presets for contour-tuning settings
 - Improve orientation confidence scoring
 - Add multiple-object pick ranking
 - Add automatic failure-case ranking
