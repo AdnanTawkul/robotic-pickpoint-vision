@@ -1,0 +1,17 @@
+# Core image-processing and numerical tools
+opencv-python>=4.9.0
+numpy>=1.26.0
+
+# Deep-learning / detection
+torch>=2.2.0
+ultralytics>=8.2.0
+
+# App and visualization
+streamlit>=1.35.0
+pandas>=2.2.0
+matplotlib>=3.8.0
+Pillow>=10.3.0
+
+# Testing and developer tools
+pytest>=8.0.0
+ruff>=0.5.0

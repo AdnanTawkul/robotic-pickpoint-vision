@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large/generated project outputs
+outputs/annotated/*
+outputs/metrics/*
+data/synthetic/*
+!outputs/annotated/.gitkeep
+!outputs/metrics/.gitkeep
+!data/synthetic/.gitkeep
+
+# Model weights and exported models
+*.pt
+*.onnx
+*.engine
+
+# Logs
+*.log
