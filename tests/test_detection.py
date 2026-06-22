@@ -12,6 +12,7 @@ from pickpoint_vision.detection import (
     detection_from_xyxy,
     draw_detection_results,
     filter_detections,
+    resolve_yolo_device,
     save_detection_results_csv,
 )
 
@@ -41,6 +42,7 @@ def test_yolo_inference_config_kwargs() -> None:
         iou_threshold=0.5,
         augment=True,
         max_detections=25,
+        device="cpu",
     )
 
     kwargs = config.to_predict_kwargs()
@@ -50,7 +52,15 @@ def test_yolo_inference_config_kwargs() -> None:
     assert kwargs["iou"] == 0.5
     assert kwargs["augment"] is True
     assert kwargs["max_det"] == 25
+    assert kwargs["device"] == "cpu"
     assert kwargs["verbose"] is False
+
+
+def test_resolve_yolo_device_explicit_values() -> None:
+    """Device resolution should be safe whether CUDA is installed or not."""
+    assert resolve_yolo_device("cpu") == "cpu"
+    assert resolve_yolo_device("cuda:0") in {"cpu", "0"}
+    assert resolve_yolo_device("0") in {"cpu", "0"}
 
 
 def test_filter_detections() -> None:
