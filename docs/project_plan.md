@@ -25,8 +25,8 @@ The final demo will allow a user to upload an image, run the perception pipeline
 1. Define scope and create repository foundation. **Done**
 2. Build synthetic image generator with ground-truth labels. **Done**
 3. Implement classical OpenCV pose estimation on synthetic objects. **Done**
-4. Add visualization utilities. **Current**
-5. Add first command-line demo.
+4. Add visualization utilities. **Done**
+5. Add first command-line demo. **Current**
 6. Add evaluation metrics.
 7. Add robustness transformations and robustness evaluation.
 8. Add YOLO-based object detection path.
@@ -103,4 +103,27 @@ The preview grid is saved to:
 
 ```text
 outputs/annotated/step4/annotation_grid.png
+```
+
+## Step 5 end-to-end demo
+
+Step 5 adds a single demo command:
+
+```powershell
+py scripts\run_demo.py --regenerate
+```
+
+The command:
+
+1. creates or loads the synthetic dataset
+2. estimates pose from each mask
+3. saves annotated result images
+4. creates a visual preview grid
+5. saves a JSON summary with center error, orientation error, and pose-estimation time
+
+Generated demo outputs:
+
+```text
+outputs/annotated/demo/demo_grid.png
+outputs/metrics/demo_summary.json
 ```

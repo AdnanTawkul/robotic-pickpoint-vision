@@ -6,11 +6,17 @@ Repository name: `robotic-pickpoint-vision`
 
 ## Project goal
 
-Build a no-hardware perception pipeline that detects objects, estimates a recommended robotic pick point, estimates object orientation, visualizes the result, and evaluates accuracy and robustness.
+Build a no-hardware perception pipeline that detects objects, estimates a recommended pick point, estimates object orientation, visualizes the result, and evaluates accuracy and robustness.
 
-## Step 1 status
+## Current status
 
-This repository currently contains the initial project structure, setup files, documentation placeholders, and a setup verification script.
+Completed:
+
+- repository foundation
+- synthetic dataset generation
+- OpenCV pose estimation from masks
+- visualization utilities
+- first end-to-end command-line demo
 
 ## Planned final features
 
@@ -50,16 +56,34 @@ py -m pip install --upgrade pip
 py -m pip install -e .
 ```
 
-Verify the Step 1 setup:
+## Run the current demo
 
 ```powershell
-py scripts\verify_setup.py
+py scripts\run_demo.py --regenerate
 ```
 
-Expected result:
+The demo creates annotated outputs here:
 
 ```text
-Step 1 setup verification passed.
+outputs/annotated/demo/
+```
+
+Open this file to inspect the visual result:
+
+```text
+outputs/annotated/demo/demo_grid.png
+```
+
+The demo summary is saved here:
+
+```text
+outputs/metrics/demo_summary.json
+```
+
+## Run tests
+
+```powershell
+py -m pytest
 ```
 
 ## Current folder structure
@@ -73,9 +97,17 @@ robotic-pickpoint-vision/
 ├── src/
 │   └── pickpoint_vision/
 │       ├── __init__.py
-│       └── utils.py
+│       ├── pipeline.py
+│       ├── pose_estimation.py
+│       ├── synthetic_data.py
+│       ├── utils.py
+│       └── visualization.py
 ├── scripts/
-│   └── verify_setup.py
+│   ├── create_synthetic_dataset.py
+│   ├── run_demo.py
+│   ├── run_pose_estimation.py
+│   ├── verify_setup.py
+│   └── visualize_synthetic_results.py
 ├── app/
 ├── tests/
 ├── data/
