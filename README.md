@@ -19,6 +19,7 @@ Completed:
 - first end-to-end command-line demo
 - CSV, JSON, and Markdown evaluation reports
 - robustness image transformations
+- image-based robustness evaluation
 
 ## Planned final features
 
@@ -111,6 +112,21 @@ outputs/robustness/step7/robustness_metadata.json
 outputs/robustness/step7/robustness_preview_grid.png
 ```
 
+## Run robustness evaluation
+
+```powershell
+py scripts\evaluate_robustness.py
+```
+
+Generated robustness evaluation outputs:
+
+```text
+outputs/metrics/robustness/per_variant_metrics.csv
+outputs/metrics/robustness/robustness_summary.json
+outputs/metrics/robustness/robustness_report.md
+outputs/metrics/robustness/robustness_evaluation_grid.png
+```
+
 ## Current baseline result
 
 On the default synthetic dataset, the current mask-based baseline typically achieves sub-pixel center error and low orientation error.
@@ -146,6 +162,8 @@ robotic-pickpoint-vision/
 │       ├── pipeline.py
 │       ├── pose_estimation.py
 │       ├── robustness.py
+│       ├── robustness_evaluation.py
+│       ├── segmentation.py
 │       ├── synthetic_data.py
 │       ├── utils.py
 │       └── visualization.py
@@ -153,6 +171,7 @@ robotic-pickpoint-vision/
 │   ├── create_robustness_variants.py
 │   ├── create_synthetic_dataset.py
 │   ├── evaluate.py
+│   ├── evaluate_robustness.py
 │   ├── run_demo.py
 │   ├── run_pose_estimation.py
 │   ├── verify_setup.py

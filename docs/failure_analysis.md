@@ -46,3 +46,17 @@ Expected risk: low contrast can make segmentation unstable, while very high cont
 ### Partial occlusion
 
 Expected risk: the visible contour may no longer represent the full object geometry, causing center and orientation estimates to shift.
+
+## Step 8 quantitative robustness evaluation
+
+Step 8 evaluates degraded RGB images using classical image-based segmentation. This is intentionally harder than the clean-mask baseline.
+
+Expected observations:
+
+- blur should usually remain stable for large objects
+- mild noise should usually remain stable after morphology cleanup
+- strong noise may create extra foreground regions
+- low contrast can reduce segmentation reliability
+- partial occlusion may shift the estimated contour, center, and orientation
+
+These are useful portfolio discussion points because they show practical error analysis instead of only ideal-case demos.

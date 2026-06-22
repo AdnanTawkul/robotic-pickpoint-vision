@@ -28,8 +28,8 @@ The final demo will allow a user to upload an image, run the perception pipeline
 4. Add visualization utilities. **Done**
 5. Add first command-line demo. **Done**
 6. Add evaluation metrics. **Done**
-7. Add robustness transformations. **Current**
-8. Add robustness evaluation.
+7. Add robustness transformations. **Done**
+8. Add robustness evaluation. **Current**
 9. Add YOLO-based object detection path.
 10. Integrate detection with pose estimation.
 11. Build Streamlit GUI.
@@ -176,3 +176,25 @@ outputs/robustness/step7/robustness_metadata.csv
 outputs/robustness/step7/robustness_metadata.json
 outputs/robustness/step7/robustness_preview_grid.png
 ```
+
+## Step 8 robustness evaluation
+
+Step 8 adds image-based segmentation and quantitative robustness evaluation.
+
+The command is:
+
+```powershell
+py scripts\evaluate_robustness.py
+```
+
+Generated outputs:
+
+```text
+outputs/metrics/robustness/per_variant_metrics.csv
+outputs/metrics/robustness/robustness_summary.json
+outputs/metrics/robustness/robustness_report.md
+outputs/metrics/robustness/robustness_evaluation_grid.png
+outputs/metrics/robustness/annotated/
+```
+
+This step evaluates the classical OpenCV image-based path, not the clean-mask baseline. This makes the reported robustness errors more realistic.
